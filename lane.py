@@ -54,16 +54,29 @@ class Lane:
             (767, 345),  # Bottom-right corner
             (676, 230)  # Top-right corner
         ])
+        # self.roi_points = np.float32([
+        #     (155, 244),  # Top-left corner
+        #     (62, 283),  # Bottom-left corner
+        #     (150, 333), # Bottom middle left
+        #     (330, 350), # Bottom middle
+        #     (552, 336), # Bottom middle right
+        #     (699, 280), # Bottom right corner
+        #     (601, 236), # top right corner
+        #     (484, 263), # top middle right
+        #     (353, 270), # top middle
+        #     (237, 266),  # top left middle
+        # ])
 
         # The desired corner locations  of the region of interest
         # after we perform perspective transformation.
         # Assume image width of 600, padding == 60. actually 767 with height of 440
-        self.padding = int(0.10 * width)  # padding from side of the image in pixels
+        self.w_padding = int(0.10 * width)  # padding from side of the image in pixels
+        self.h_padding = int(0.20 * height)  # padding from top of the image in pixels
         self.desired_roi_points = np.float32([
-            [self.padding, 0],  # Top-left corner
-            [self.padding, self.orig_image_size[1]],  # Bottom-left corner
-            [self.orig_image_size[0] - self.padding, self.orig_image_size[1]],  # Bottom-right corner
-            [self.orig_image_size[0] - self.padding, 0]  # Top-right corner
+            [self.w_padding, self.h_padding],  # Top-left corner
+            [self.w_padding, self.orig_image_size[1]],  # Bottom-left corner
+            [self.orig_image_size[0] - self.w_padding, self.orig_image_size[1] + self.h_padding],  # Bottom-right corner
+            [self.orig_image_size[0] - self.w_padding, self.h_padding]  # Top-right corner
         ])
 
         # Histogram that shows the white pixel peaks for lane line detection
@@ -201,9 +214,7 @@ class Lane:
                     (int((5 / 600) * self.width), int((20 / 338) * self.height)), cv2.FONT_HERSHEY_SIMPLEX,
                     (float((0.5 / 600) * self.width)), (255, 255, 255), 2, cv2.LINE_AA)
         cv2.putText(image_copy, 'Center Offset: ' + str(self.center_offset)[:7] + ' cm', (int((5 / 600) * self.width),
-                                                                                          int((
-                                                                                                          40 / 338) * self.height)),
-                    cv2.FONT_HERSHEY_SIMPLEX, (float((0.5 / 600) * self.width)),
+                    int((40 / 338) * self.height)), cv2.FONT_HERSHEY_SIMPLEX, (float((0.5 / 600) * self.width)),
                     (255, 255, 255), 2, cv2.LINE_AA)
 
         if plot == True:
@@ -258,8 +269,7 @@ class Lane:
         self.right_fit = right_fit
 
         # Create the x and y values to plot on the image
-        ploty = np.linspace(
-            0, self.warped_frame.shape[0] - 1, self.warped_frame.shape[0])
+        ploty = np.linspace(0, self.warped_frame.shape[0] - 1, self.warped_frame.shape[0])
         left_fitx = left_fit[0] * ploty ** 2 + left_fit[1] * ploty + left_fit[2]
         right_fitx = right_fit[0] * ploty ** 2 + right_fit[1] * ploty + right_fit[2]
         self.ploty = ploty
@@ -561,6 +571,7 @@ class Lane:
         if frame is None:
             frame = self.lane_line_markings
 
+        print(f'{self.roi_points=}, {self.desired_roi_points=}')
         # Calculate the transformation matrix
         self.transformation_matrix = cv2.getPerspectiveTransform(self.roi_points, self.desired_roi_points)
 
